@@ -1,17 +1,18 @@
 version: '3.9'
 
+volumes:
+  backend-log:
+
 services:
   backend:
-    image: ghcr.io/blockscout/${DOCKER_REPO:-blockscout}:${DOCKER_TAG:-latest}
+    image: blockscout/${DOCKER_REPO:-blockscout}:${DOCKER_TAG:-latest}
     pull_policy: always
-    restart: always
+    restart: unless-stopped
     stop_grace_period: 5m
-    container_name: 'backend'
     command: sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - 'host.docker.internal:${HOST_IP:-172.17.0.1}'
     env_file:
       -  ../envs/common-blockscout.env
     volumes:
-      - ./logs/:/app/logs/
-      - ./dets/:/app/dets/
+      - backend-log:/app/logs/

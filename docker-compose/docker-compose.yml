@@ -1,5 +1,11 @@
 version: '3.9'
 
+volumes:
+  stats-db-data:
+  db-data:
+  redis-data:
+  backend-log:
+
 services:
   redis-db:
     extends:
@@ -26,40 +32,20 @@ services:
     extends:
       file: ./services/backend.yml
       service: backend
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile
-      args:
-        RELEASE_VERSION: 8.1.1
+    image: ${BLOCKSCOUT_IMAGE:-blockscout/blockscout:latest}
     links:
       - db:database
     environment:
-        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8545/
-        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:8545/
-        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8545/
-        CHAIN_ID: '1337'
+      ETHEREUM_JSONRPC_HTTP_URL: ${ETHEREUM_JSONRPC_HTTP:-http://host.docker.internal:9545}/
+      ETHEREUM_JSONRPC_TRACE_URL: ${ETHEREUM_JSONRPC_TRACE:-http://host.docker.internal:9545}/
+      # ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:9545/
+      CHAIN_ID: '901'
+      ETHEREUM_JSONRPC_VARIANT: ${ETHEREUM_JSONRPC_VARIANT:-geth}
 
-  nft_media_handler:
-    depends_on:
-      - backend
-    extends:
-      file: ./services/nft_media_handler.yml
-      service: nft_media_handler
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile
-      args:
-        RELEASE_VERSION: 8.1.1
-
-  visualizer:
-    extends:
-      file: ./services/visualizer.yml
-      service: visualizer
-
-  sig-provider:
-    extends:
-      file: ./services/sig-provider.yml
-      service: sig-provider
+  # visualizer:
+  #   extends:
+  #     file: ./services/visualizer.yml
+  #     service: visualizer
 
   frontend:
     depends_on:
@@ -88,14 +74,6 @@ services:
     extends:
       file: ./services/stats.yml
       service: stats
-
-  user-ops-indexer:
-    depends_on:
-      - db
-      - backend
-    extends:
-      file: ./services/user-ops-indexer.yml
-      service: user-ops-indexer
 
   proxy:
     depends_on:
