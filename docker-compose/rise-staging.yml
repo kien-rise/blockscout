@@ -1,5 +1,21 @@
 # Origin: https://github.com/blockscout/blockscout/blob/79fa763b6c9cd989d88b8baea53286d7be041bdd/docker-compose/docker-compose.yml
 
+# ```sh
+# cd docker-compose
+
+# # up
+# docker compose -f rise-staging.yml up -d db-init db
+# docker compose -f rise-staging.yml up -d backend --build
+# docker compose -f rise-staging.yml up -d stats-db-init stats-db stats
+# docker compose -f rise-staging.yml up -d frontend
+
+# # down
+# docker compose -f rise-staging.yml down frontend
+# docker compose -f rise-staging.yml down stats-db-init stats-db stats
+# docker compose -f rise-staging.yml down backend
+# docker compose -f rise-staging.yml down db-init db
+# ```
+
 services:
   db-init:
     extends:
