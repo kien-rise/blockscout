@@ -38,13 +38,13 @@ services:
       file: ./services/frontend.yml
       service: frontend
     environment:
-      NEXT_PUBLIC_API_HOST: "localhost"
+      NEXT_PUBLIC_API_HOST: "${BLOCKSCOUT_PUBLIC_HOST:-localhost}"
       NEXT_PUBLIC_API_PROTOCOL: "http"
       NEXT_PUBLIC_API_PORT: "25723"
-      NEXT_PUBLIC_APP_HOST: "localhost"
+      NEXT_PUBLIC_APP_HOST: "${BLOCKSCOUT_PUBLIC_HOST:-localhost}"
       NEXT_PUBLIC_APP_PROTOCOL: http
       NEXT_PUBLIC_APP_PORT: "25743"
-      NEXT_PUBLIC_STATS_API_HOST: http://localhost:25778
+      NEXT_PUBLIC_STATS_API_HOST: http://${BLOCKSCOUT_PUBLIC_HOST:-localhost}:25778
     ports:
       - "25743:3000"
 
@@ -72,5 +72,5 @@ services:
       - "25778:8050"
     environment:
       STATS__BLOCKSCOUT_API_URL: "http://backend:4000"
-      STATS__SERVER__HTTP__CORS__ALLOWED_ORIGIN: "http://localhost:25743"
+      STATS__SERVER__HTTP__CORS__ALLOWED_ORIGIN: "http://${BLOCKSCOUT_PUBLIC_HOST:-localhost}:25743"
       STATS__SERVER__HTTP__CORS__ENABLED: "true"
