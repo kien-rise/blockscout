@@ -89,4 +89,6 @@ COPY --from=builder --chown=${BLOCKSCOUT_USER}:${BLOCKSCOUT_GROUP} /app/config/a
 
 RUN mkdir dets && mkdir temp && chown -R ${BLOCKSCOUT_USER}:${BLOCKSCOUT_GROUP} /app
 
+RUN apk --no-cache --update add screen
+
 USER ${BLOCKSCOUT_USER}:${BLOCKSCOUT_GROUP}

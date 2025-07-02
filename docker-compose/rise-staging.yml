@@ -41,6 +41,7 @@ services:
       dockerfile: ./docker/Dockerfile
       args:
         RELEASE_VERSION: 8.1.1
+    pull_policy: build
     environment:
       ETHEREUM_JSONRPC_HTTP_URL: "https://staging.riselabs.xyz"
       ETHEREUM_JSONRPC_TRACE_URL: "https://staging.riselabs.xyz"
