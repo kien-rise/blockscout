@@ -32,6 +32,7 @@ defmodule Utils.MixProject do
     [
       {:credo, "~> 1.5", only: [:test, :dev], runtime: false},
       {:httpoison, "~> 2.0"},
+      {:meck, "~> 0.9.2"},
       {:mime, "~> 2.0"}
     ]
   end

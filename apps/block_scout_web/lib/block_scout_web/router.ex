@@ -1,6 +1,7 @@
 defmodule BlockScoutWeb.Router do
   use BlockScoutWeb, :router
   import Phoenix.LiveDashboard.Router
+  import FlameOn
 
   use Utils.CompileTimeEnvHelper,
     admin_panel_enabled: [:block_scout_web, :admin_panel_enabled],
@@ -96,7 +97,10 @@ defmodule BlockScoutWeb.Router do
       get("/schema.graphql", GraphQL.SchemaController, :index)
     end
 
-    live_dashboard "/dashboard"
+    live_dashboard "/dashboard",
+      additional_pages: [
+        flame_on: FlameOn.DashboardPage
+      ]
   end
 
   scope "/verify_smart_contract" do

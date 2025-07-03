@@ -89,6 +89,7 @@ defmodule Explorer.Mixfile do
       # Log errors and application output to separate files
       {:logger_file_backend, "~> 0.0.10"},
       {:math, "~> 0.7.0"},
+      {:meck, "~> 0.9.2"},
       {:mock, "~> 0.3.0", only: [:test], runtime: false},
       {:mox, "~> 1.0"},
       {:phoenix_html, "== 3.3.4"},

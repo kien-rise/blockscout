@@ -28,6 +28,7 @@ defmodule BlockScout.Mixfile do
             nft_media_handler: :permanent,
             runtime_tools: :permanent
           ],
+          strip_beams: false,
           steps: [:assemble, &copy_prod_runtime_config/1],
           validate_compile_env: false
         ]
@@ -99,6 +100,7 @@ defmodule BlockScout.Mixfile do
       {:absinthe_plug, git: "https://github.com/blockscout/absinthe_plug.git", tag: "1.5.8", override: true},
       {:tesla, "~> 1.14.1"},
       {:mint, "~> 1.7.1"},
+      {:meck, "~> 0.9.2"},
       # Documentation
       {:ex_doc, "~> 0.38.1", only: :dev, runtime: false},
       {:number, "~> 1.0.3"}

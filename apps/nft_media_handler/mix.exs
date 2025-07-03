@@ -31,6 +31,7 @@ defmodule NFTMediaHandler.MixProject do
       {:image, "~> 0.54"},
       {:httpoison, "~> 2.0"},
       {:evision, "~> 0.2"},
+      {:meck, "~> 0.9.2"},
       {:mime, "~> 2.0"},
       {:utils, in_umbrella: true}
     ]

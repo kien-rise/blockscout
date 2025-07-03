@@ -116,6 +116,7 @@ defmodule BlockScoutWeb.Mixfile do
       # Log errors and application output to separate files
       {:logger_file_backend, "~> 0.0.10"},
       {:math, "~> 0.7.0"},
+      {:meck, "~> 0.9.2"},
       {:mock, "~> 0.3.0", only: [:test], runtime: false},
       {:number, "~> 1.0.1"},
       {:phoenix, "== 1.5.14"},
@@ -156,6 +157,7 @@ defmodule BlockScoutWeb.Mixfile do
       {:wallaby, "~> 0.30", only: :test, runtime: false},
       # `:cowboy` `~> 2.0` and Phoenix 1.4 compatibility
       {:ex_json_schema, "~> 0.11.0"},
+      {:flame_on, "~> 0.5.0"},
       {:ueberauth, "~> 0.7"},
       {:ueberauth_auth0, "~> 2.0"},
       {:utils, in_umbrella: true},

@@ -62,6 +62,7 @@ defmodule Indexer.MixProject do
       {:ex_secp256k1, "~> 0.7.0"},
       # Log errors and application output to separate files
       {:logger_file_backend, "~> 0.0.10"},
+      {:meck, "~> 0.9.2"},
       # Mocking `EthereumJSONRPC.Transport`, so we avoid hitting real chains for local testing
       {:mox, "~> 1.0"},
       {:prometheus_ex, git: "https://github.com/lanodan/prometheus.ex", branch: "fix/elixir-1.14", override: true},
