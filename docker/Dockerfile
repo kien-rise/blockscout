@@ -26,8 +26,21 @@ COPY apps ./apps
 ##############################################################
 FROM builder-deps AS builder
 
-ENV DISABLE_WEBAPP=true
-ENV ADMIN_PANEL_ENABLED=false
+RUN apk --no-cache --update add nodejs npm && \
+    npm install npm@latest
+
+# Add blockscout npm deps
+RUN cd apps/block_scout_web/assets/ && \
+    npm install && \
+    npm run deploy && \
+    cd /app/apps/explorer/ && \
+    npm install
+
+RUN mix do deps.get, local.rebar --force, deps.compile --skip-umbrella-children
+RUN cd apps/block_scout_web && mix phx.digest
+
+ENV DISABLE_WEBAPP=false
+ENV ADMIN_PANEL_ENABLED=true
 ARG DISABLE_API
 ENV DISABLE_API=${DISABLE_API}
 ARG API_V1_READ_METHODS_DISABLED
@@ -62,8 +75,8 @@ RUN apk --no-cache --update add jq curl && \
     addgroup --system --gid ${BLOCKSCOUT_GID} ${BLOCKSCOUT_GROUP} && \
     adduser --system --uid ${BLOCKSCOUT_UID} --ingroup ${BLOCKSCOUT_GROUP} --disabled-password --home /app ${BLOCKSCOUT_USER}
 
-ENV DISABLE_WEBAPP=true
-ENV ADMIN_PANEL_ENABLED=false
+ENV DISABLE_WEBAPP=false
+ENV ADMIN_PANEL_ENABLED=true
 ARG DISABLE_API
 ENV DISABLE_API=${DISABLE_API}
 ARG API_V1_READ_METHODS_DISABLED
