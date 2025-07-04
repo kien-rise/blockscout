@@ -17,6 +17,7 @@ defmodule BlockScoutWeb.Endpoint do
   else
     socket("/socket", BlockScoutWeb.UserSocket, websocket: [timeout: 45_000])
     socket("/socket/v2", BlockScoutWeb.UserSocketV2, websocket: [timeout: 45_000])
+    socket("/live", Phoenix.LiveView.Socket)
 
     # Serve at "/" the static files from "priv/static" directory.
     #

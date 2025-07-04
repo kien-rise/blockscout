@@ -1,6 +1,8 @@
 defmodule BlockScoutWeb.Router do
   use BlockScoutWeb, :router
 
+  import Phoenix.LiveDashboard.Router
+
   use Utils.CompileTimeEnvHelper,
     admin_panel_enabled: [:block_scout_web, :admin_panel_enabled],
     graphql_enabled: [:block_scout_web, [Api.GraphQL, :enabled]],
@@ -91,6 +93,9 @@ defmodule BlockScoutWeb.Router do
       get("/api-docs", PageNotFoundController, :index)
       get("/eth-rpc-api-docs", PageNotFoundController, :index)
     end
+
+    # RISE TODO: consider moving this to /admin
+    live_dashboard("/dashboard")
   end
 
   scope "/verify_smart_contract" do
