@@ -1,3 +1,5 @@
+docker-compose/eflame/
+
 # App artifacts
 /_build
 /apps/*/cover

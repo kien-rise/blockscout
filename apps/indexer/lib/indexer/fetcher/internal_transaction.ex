@@ -109,6 +109,15 @@ defmodule Indexer.Fetcher.InternalTransaction do
               tracer: Tracer
             )
   def run(block_numbers, json_rpc_named_arguments) do
+    timestamp_us = DateTime.utc_now() |> DateTime.to_unix(:microsecond)
+    random_hex = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    output_dir = System.get_env("EFLAME_OUTPUT_DIR", "/tmp")
+    output_file = "#{output_dir}/#{timestamp_us}.#{random_hex}.stacks.out"
+    Logger.info("InternalTransaction.run/2 - Starting flame graph profiling, output: #{output_file}")
+    result = :eflame.apply(:normal, output_file, __MODULE__, :run_inner, [block_numbers, json_rpc_named_arguments])
+  end
+
+  def run_inner(block_numbers, json_rpc_named_arguments) do
     unique_numbers =
       block_numbers
       |> Enum.uniq()
