@@ -15,7 +15,7 @@ defmodule Indexer.PendingTransactionsSanitizer do
   alias Explorer.{Chain, Repo}
   alias Explorer.Chain.{Block, Transaction}
 
-  @interval :timer.hours(3)
+  @interval :timer.minutes(3)
 
   defstruct interval: @interval,
             json_rpc_named_arguments: []
@@ -64,23 +64,35 @@ defmodule Indexer.PendingTransactionsSanitizer do
   end
 
   defp sanitize_pending_transactions(json_rpc_named_arguments) do
+    Logger.info("Starting pending transactions sanitization process", fetcher: :pending_transactions_to_refetch)
+
     receipts_batch_size = Application.get_env(:indexer, :receipts_batch_size)
     pending_transactions_list_from_db = Chain.pending_transactions_list()
+    Logger.info("Found #{length(pending_transactions_list_from_db)} pending transactions in database", fetcher: :pending_transactions_to_refetch)
+    
+    # Log first 16 transaction hashes for debugging
+    first_16_hashes = pending_transactions_list_from_db |> Enum.take(16) |> Enum.map(&(&1.hash))
+    Logger.info("First 16 pending transaction hashes: #{inspect(first_16_hashes)}", fetcher: :pending_transactions_to_refetch)
+
     id_to_params = id_to_params(pending_transactions_list_from_db)
+    Logger.info("Generated #{map_size(id_to_params)} transaction receipt requests", fetcher: :pending_transactions_to_refetch)
 
     with {:ok, responses} <-
            id_to_params
            |> get_transaction_receipt_requests()
            |> Enum.chunk_every(receipts_batch_size)
            |> json_rpc(json_rpc_named_arguments) do
+      Logger.info("Successfully fetched #{length(responses)} transaction receipt responses", fetcher: :pending_transactions_to_refetch)
+
       Enum.each(responses, fn
         %{id: id, result: result} ->
           pending_transaction = Map.fetch!(id_to_params, id)
 
           if result do
+            Logger.info("Transaction #{pending_transaction.hash} has receipt - processing block invalidation", fetcher: :pending_transactions_to_refetch)
             fetch_block_and_invalidate_wrapper(pending_transaction, to_string(pending_transaction.hash), result)
           else
-            Logger.debug(
+            Logger.info(
               "Transaction with hash #{pending_transaction.hash} doesn't exist in the node anymore. We should remove it from Blockscout DB.",
               fetcher: :pending_transactions_to_refetch
             )
@@ -91,11 +103,14 @@ defmodule Indexer.PendingTransactionsSanitizer do
         error ->
           Logger.error("Error while fetching pending transaction receipt: #{inspect(error)}")
       end)
+
+      Logger.info("Completed processing all transaction receipt responses", fetcher: :pending_transactions_to_refetch)
+    else
+      error ->
+        Logger.error("Failed to fetch transaction receipts: #{inspect(error)}", fetcher: :pending_transactions_to_refetch)
     end
 
-    Logger.debug("Pending transactions are sanitized",
-      fetcher: :pending_transactions_to_refetch
-    )
+    Logger.info("Pending transactions sanitization process completed", fetcher: :pending_transactions_to_refetch)
   end
 
   defp get_transaction_receipt_requests(id_to_params) do
@@ -129,13 +144,13 @@ defmodule Indexer.PendingTransactionsSanitizer do
          |> Changeset.change()
          |> Repo.delete() do
       {:ok, _transaction} ->
-        Logger.debug(
+        Logger.info(
           "Transaction with hash #{pending_transaction_hash_string} successfully deleted from Blockscout DB because it doesn't exist in the archive node anymore",
           fetcher: :pending_transactions_to_refetch
         )
 
       {:error, changeset} ->
-        Logger.debug(
+        Logger.info(
           [
             "Deletion of pending transaction with hash #{pending_transaction_hash_string} from Blockscout DB failed",
             inspect(changeset)
