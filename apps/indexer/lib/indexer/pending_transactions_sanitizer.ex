@@ -52,7 +52,7 @@ defmodule Indexer.PendingTransactionsSanitizer do
         :sanitize_pending_transactions,
         %{interval: interval, json_rpc_named_arguments: json_rpc_named_arguments} = state
       ) do
-    Logger.debug("Start sanitizing of pending transactions",
+    Logger.info("Start sanitizing of pending transactions",
       fetcher: :pending_transactions_to_refetch
     )
 
@@ -69,7 +69,7 @@ defmodule Indexer.PendingTransactionsSanitizer do
     receipts_batch_size = Application.get_env(:indexer, :receipts_batch_size)
     pending_transactions_list_from_db = Chain.pending_transactions_list()
     Logger.info("Found #{length(pending_transactions_list_from_db)} pending transactions in database", fetcher: :pending_transactions_to_refetch)
-    
+
     # Log first 16 transaction hashes for debugging
     first_16_hashes = pending_transactions_list_from_db |> Enum.take(16) |> Enum.map(&(&1.hash))
     Logger.info("First 16 pending transaction hashes: #{inspect(first_16_hashes)}", fetcher: :pending_transactions_to_refetch)
@@ -123,14 +123,14 @@ defmodule Indexer.PendingTransactionsSanitizer do
     block_hash = Map.get(result, "blockHash")
 
     if block_hash do
-      Logger.debug(
+      Logger.info(
         "Transaction with hash #{pending_transaction_hash_string} already included into the block #{block_hash}. We should invalidate consensus for it in order to re-fetch transactions",
         fetcher: :pending_transactions_to_refetch
       )
 
       fetch_block_and_invalidate(block_hash, pending_transaction, result)
     else
-      Logger.debug(
+      Logger.info(
         "Transaction with hash #{pending_transaction_hash_string} is still pending. Do nothing.",
         fetcher: :pending_transactions_to_refetch
       )
@@ -163,7 +163,7 @@ defmodule Indexer.PendingTransactionsSanitizer do
   defp fetch_block_and_invalidate(block_hash, pending_transaction, transaction) do
     case Chain.fetch_block_by_hash(block_hash) do
       %{number: number, consensus: consensus} = block ->
-        Logger.debug(
+        Logger.info(
           "Corresponding number of the block with hash #{block_hash} to invalidate is #{number} and consensus #{consensus}",
           fetcher: :pending_transactions_to_refetch
         )
@@ -171,7 +171,7 @@ defmodule Indexer.PendingTransactionsSanitizer do
         invalidate_block(block, pending_transaction, transaction)
 
       _ ->
-        Logger.debug(
+        Logger.info(
           "Block with hash #{block_hash} is not yet in the DB",
           fetcher: :pending_transactions_to_refetch
         )
@@ -197,7 +197,7 @@ defmodule Indexer.PendingTransactionsSanitizer do
 
       Repo.update(changeset)
 
-      Logger.debug(
+      Logger.info(
         "Pending transaction with hash #{"0x" <> Base.encode16(pending_transaction.hash.bytes, case: :lower)} assigned to block ##{block.number} with hash #{block.hash}"
       )
     end

@@ -48,8 +48,12 @@ defmodule Indexer.Block.Catchup.Fetcher do
     Logger.metadata(fetcher: :block_catchup)
     Process.flag(:trap_exit, true)
 
-    case MissingRangesManipulator.get_latest_batch(blocks_batch_size() * blocks_concurrency()) do
+    batch_size = blocks_batch_size() * blocks_concurrency()
+    Logger.info("Block catchup task starting with batch size: #{batch_size}")
+
+    case MissingRangesManipulator.get_latest_batch(batch_size) do
       [] ->
+        Logger.info("No missing ranges found - all blocks are up to date")
         %{
           first_block_number: nil,
           last_block_number: nil,
@@ -58,6 +62,8 @@ defmodule Indexer.Block.Catchup.Fetcher do
         }
 
       missing_ranges ->
+        Logger.info("Found #{length(missing_ranges)} missing ranges to process")
+        
         first.._//_ = List.first(missing_ranges)
         _..last//_ = List.last(missing_ranges)
 
@@ -68,7 +74,12 @@ defmodule Indexer.Block.Catchup.Fetcher do
           |> Stream.map(&Enum.count/1)
           |> Enum.sum()
 
+        Logger.info("Processing #{missing_block_count} missing blocks from #{first} to #{last}")
+        Logger.debug("Missing ranges: #{inspect(missing_ranges)}")
+
         stream_fetch_and_import(state, missing_ranges)
+
+        Logger.info("Completed processing #{missing_block_count} blocks from #{first} to #{last}")
 
         %{
           first_block_number: first,
@@ -170,31 +181,47 @@ defmodule Indexer.Block.Catchup.Fetcher do
     Logger.metadata(fetcher: :block_catchup, first_block_number: first, last_block_number: last)
     Process.flag(:trap_exit, true)
 
+    block_count = Enum.count(range)
+    Logger.info("Starting fetch and import for range #{first}..#{last} (#{block_count} blocks)")
+
     {fetch_duration, result} = :timer.tc(fn -> fetch_and_import_range(block_fetcher, range) end)
+
+    fetch_duration_ms = div(fetch_duration, 1000)
+    Logger.info("Fetch and import completed in #{fetch_duration_ms}ms for range #{first}..#{last}")
 
     Prometheus.Instrumenter.block_full_process(fetch_duration, __MODULE__)
 
     case result do
       {:ok, %{inserted: inserted, errors: errors}} ->
+        Logger.info("Successfully imported #{map_size(inserted)} entities for range #{first}..#{last}")
+        if length(errors) > 0 do
+          Logger.warning("Encountered #{length(errors)} errors during import for range #{first}..#{last}")
+          Logger.debug("Import errors: #{inspect(errors)}")
+        end
+        
         valid_errors = handle_null_rounds(errors)
         clear_missing_ranges(range, valid_errors)
 
+        Logger.info("Completed processing range #{first}..#{last}")
         {:ok, inserted: inserted}
 
       {:error, {:import = step, [%Changeset{} | _] = changesets}} = error ->
         Prometheus.Instrumenter.import_errors()
+        Logger.error("Import validation failed for range #{first}..#{last} at step #{step}")
         Logger.error(fn -> ["failed to validate: ", inspect(changesets), ". Retrying."] end, step: step)
 
         error
 
       {:error, {:import = step, reason}} = error ->
         Prometheus.Instrumenter.import_errors()
+        Logger.error("Import failed for range #{first}..#{last} at step #{step}: #{inspect(reason)}")
         Logger.error(fn -> [inspect(reason), ". Retrying."] end, step: step)
         if reason == :timeout, do: add_range_to_massive_blocks(range)
 
         error
 
       {:error, {step, reason}} = error ->
+        Logger.error("Fetch failed for range #{first}..#{last} at step #{step}: #{inspect(reason)}")
         Logger.error(
           fn ->
             ["failed to fetch: ", inspect(reason), ". Retrying."]
@@ -205,6 +232,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
         error
 
       {:error, {step, failed_value, _changes_so_far}} = error ->
+        Logger.error("Insert failed for range #{first}..#{last} at step #{step}")
         Logger.error(
           fn ->
             ["failed to insert: ", inspect(failed_value), ". Retrying."]
@@ -216,6 +244,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
     end
   rescue
     exception ->
+      Logger.error("Exception occurred processing range #{first}..#{last}: #{Exception.message(exception)}")
       if timeout_exception?(exception), do: add_range_to_massive_blocks(range)
       Logger.error(fn -> [Exception.format(:error, exception, __STACKTRACE__), ?\n, ?\n, "Retrying."] end)
       {:error, exception}
