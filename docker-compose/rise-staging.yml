@@ -1,3 +1,6 @@
+volumes:
+  eflame_data:
+
 services:
   db-init:
     extends:
@@ -38,7 +41,7 @@ services:
     ports:
       - "25723:4000"
     volumes:
-      - ./eflame:/tmp/eflame
+      - eflame_data:/tmp/eflame
 
   frontend:
     depends_on:
