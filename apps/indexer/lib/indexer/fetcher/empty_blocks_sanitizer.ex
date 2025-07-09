@@ -16,6 +16,7 @@ defmodule Indexer.Fetcher.EmptyBlocksSanitizer do
   alias Explorer.{Chain, Repo}
   alias Explorer.Chain.{Block, PendingBlockOperation, Transaction}
   alias Explorer.Chain.Cache.BlockNumber
+  alias Utils.EFlameProfiler
 
   @interval :timer.seconds(10)
 
@@ -69,7 +70,15 @@ defmodule Indexer.Fetcher.EmptyBlocksSanitizer do
     {:noreply, state}
   end
 
-  defp sanitize_empty_blocks(json_rpc_named_arguments) do
+  def sanitize_empty_blocks(json_rpc_named_arguments) do
+    EFlameProfiler.profile_call(
+      __MODULE__,
+      :sanitize_empty_blocks_inner,
+      [json_rpc_named_arguments]
+    )
+  end
+
+  def sanitize_empty_blocks_inner(json_rpc_named_arguments) do
     unprocessed_non_empty_blocks_query = unprocessed_non_empty_blocks_query(limit())
 
     Repo.update_all(

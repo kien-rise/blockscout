@@ -24,6 +24,7 @@ defmodule Indexer.Fetcher.TokenBalance do
   alias Explorer.Utility.MissingBalanceOfToken
   alias Indexer.{BufferedTask, TokenBalances, Tracer}
   alias Indexer.Fetcher.TokenBalance.Supervisor, as: TokenBalanceSupervisor
+  alias Utils.EFlameProfiler
 
   @behaviour BufferedTask
 
@@ -74,6 +75,10 @@ defmodule Indexer.Fetcher.TokenBalance do
 
   @impl BufferedTask
   def init(initial, reducer, _) do
+    EFlameProfiler.profile_call(__MODULE__, :init_inner, [initial, reducer])
+  end
+
+  def init_inner(initial, reducer) do
     {:ok, final} =
       Chain.stream_unfetched_token_balances(
         initial,
@@ -97,6 +102,10 @@ defmodule Indexer.Fetcher.TokenBalance do
   @impl BufferedTask
   @decorate trace(name: "fetch", resource: "Indexer.Fetcher.TokenBalance.run/2", tracer: Tracer, service: :indexer)
   def run(entries, _json_rpc_named_arguments) do
+    EFlameProfiler.profile_call(__MODULE__, :run_inner, [entries])
+  end
+
+  def run_inner(entries) do
     params = Enum.map(entries, &format_params/1)
 
     missing_balance_of_tokens =
@@ -119,6 +128,10 @@ defmodule Indexer.Fetcher.TokenBalance do
   end
 
   def fetch_from_blockchain(params_list, missing_balance_of_tokens) do
+    EFlameProfiler.profile_call(__MODULE__, :fetch_from_blockchain_inner, [params_list, missing_balance_of_tokens])
+  end
+
+  def fetch_from_blockchain_inner(params_list, missing_balance_of_tokens) do
     params_list =
       Enum.uniq_by(params_list, &Map.take(&1, [:token_contract_address_hash, :token_id, :address_hash, :block_number]))
 
@@ -207,6 +220,10 @@ defmodule Indexer.Fetcher.TokenBalance do
   end
 
   def import_token_balances(token_balances_params) do
+    EFlameProfiler.profile_call(__MODULE__, :import_token_balances_inner, [token_balances_params])
+  end
+
+  def import_token_balances_inner(token_balances_params) do
     addresses_params = format_and_filter_address_params(token_balances_params)
     formatted_token_balances_params = format_and_filter_token_balance_params(token_balances_params)
 

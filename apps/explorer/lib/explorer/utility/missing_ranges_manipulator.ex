@@ -6,6 +6,7 @@ defmodule Explorer.Utility.MissingRangesManipulator do
   use GenServer
 
   alias Explorer.Utility.MissingBlockRange
+  alias Utils.EFlameProfiler
 
   @spec start_link(term()) :: GenServer.on_start()
   def start_link(_) do
@@ -35,19 +36,35 @@ defmodule Explorer.Utility.MissingRangesManipulator do
 
   @impl true
   def handle_call({:get_latest_batch, size}, _from, state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_call_get_latest_batch, [size, state])
+  end
+
+  def handle_call_get_latest_batch(size, state) do
     {:reply, MissingBlockRange.get_latest_batch(size), state}
   end
 
   def handle_call({:clear_batch, batch}, _from, state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_call_clear_batch, [batch, state])
+  end
+
+  def handle_call_clear_batch(batch, state) do
     {:reply, MissingBlockRange.clear_batch(batch), state}
   end
 
   def handle_call({:save_batch, batch}, _from, state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_call_save_batch, [batch, state])
+  end
+
+  def handle_call_save_batch(batch, state) do
     {:reply, MissingBlockRange.save_batch(batch), state}
   end
 
   @impl true
   def handle_cast({:add_ranges_by_block_numbers, numbers}, state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_cast_add_ranges, [numbers, state])
+  end
+
+  def handle_cast_add_ranges(numbers, state) do
     MissingBlockRange.add_ranges_by_block_numbers(numbers)
 
     {:noreply, state}

@@ -8,6 +8,7 @@ defmodule EthereumJSONRPC.Utility.EndpointAvailabilityObserver do
   require Logger
 
   alias EthereumJSONRPC.Utility.{CommonHelper, EndpointAvailabilityChecker}
+  alias Utils.EFlameProfiler
 
   @max_error_count 3
   @window_duration 3
@@ -46,7 +47,17 @@ defmodule EthereumJSONRPC.Utility.EndpointAvailabilityObserver do
   """
   @spec filter_unavailable_urls([binary()], url_type()) :: [binary()]
   def filter_unavailable_urls(urls, url_type) do
-    GenServer.call(__MODULE__, {:filter_unavailable_urls, urls, url_type})
+    start_time = System.monotonic_time(:nanosecond)
+    result = GenServer.call(__MODULE__, {:filter_unavailable_urls, urls, url_type})
+    end_time = System.monotonic_time(:nanosecond)
+    elapsed_time = end_time - start_time
+
+    IO.puts(
+      :stderr,
+      "TIMING: #{__MODULE__}.#{:filter_unavailable_urls} start=#{start_time}ns end=#{end_time}ns elapsed=#{elapsed_time}ns"
+    )
+
+    result
   end
 
   @doc """
@@ -113,6 +124,10 @@ defmodule EthereumJSONRPC.Utility.EndpointAvailabilityObserver do
   end
 
   def handle_info(:clear_old_records, %{error_counts: error_counts} = state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_info_clear_old_records, [error_counts, state])
+  end
+
+  def handle_info_clear_old_records(error_counts, state) do
     new_error_counts = Enum.reduce(error_counts, %{}, &do_clear_old_records/2)
 
     schedule_next_cleaning()

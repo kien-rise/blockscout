@@ -10,6 +10,7 @@ defmodule Indexer.Block.Catchup.MissingRangesCollector do
   alias Explorer.{Chain, Helper, Repo}
   alias Explorer.Chain.Cache.BlockNumber
   alias Explorer.Utility.{MissingBlockRange, MissingRangesManipulator}
+  alias Utils.EFlameProfiler
 
   @default_missing_ranges_batch_size 100_000
   @past_check_interval 10
@@ -128,6 +129,10 @@ defmodule Indexer.Block.Catchup.MissingRangesCollector do
 
   @impl true
   def handle_info(:update_future, %{max_fetched_block_number: max_number} = state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_info_update_future, [max_number, state])
+  end
+
+  def handle_info_update_future(max_number, state) do
     if continue_future_updating?(max_number) do
       {new_max_number, batch} = fetch_missing_ranges_batch(max_number, true)
       MissingRangesManipulator.save_batch(batch)
@@ -139,6 +144,10 @@ defmodule Indexer.Block.Catchup.MissingRangesCollector do
   end
 
   def handle_info(:update_past, %{min_fetched_block_number: min_number} = state) do
+    EFlameProfiler.profile_call(__MODULE__, :handle_info_update_past, [min_number, state])
+  end
+
+  def handle_info_update_past(min_number, state) do
     if min_number > first_block() do
       {new_min_number, batch} = fetch_missing_ranges_batch(min_number, false)
       MissingRangesManipulator.save_batch(batch)

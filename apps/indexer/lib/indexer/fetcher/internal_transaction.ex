@@ -22,6 +22,7 @@ defmodule Indexer.Fetcher.InternalTransaction do
   alias Explorer.Chain.{Block, Hash}
   alias Explorer.Chain.Cache.{Accounts, Blocks}
   alias Indexer.{BufferedTask, Tracer}
+  alias Utils.EFlameProfiler
   alias Indexer.Fetcher.InternalTransaction.Supervisor, as: InternalTransactionSupervisor
   alias Indexer.Transform.Celo.TransactionTokenTransfers, as: CeloTransactionTokenTransfers
   alias Indexer.Transform.{AddressCoinBalances, Addresses, AddressTokenBalances}
@@ -76,6 +77,14 @@ defmodule Indexer.Fetcher.InternalTransaction do
 
   @impl BufferedTask
   def init(initial, reducer, _json_rpc_named_arguments) do
+    EFlameProfiler.profile_call(
+      __MODULE__,
+      :init_inner,
+      [initial, reducer]
+    )
+  end
+
+  def init_inner(initial, reducer) do
     stream_reducer =
       if RangesHelper.trace_ranges_present?() do
         trace_block_ranges = RangesHelper.get_trace_block_ranges()
@@ -109,6 +118,14 @@ defmodule Indexer.Fetcher.InternalTransaction do
               tracer: Tracer
             )
   def run(block_numbers, json_rpc_named_arguments) do
+    EFlameProfiler.profile_call(
+      __MODULE__,
+      :run_inner,
+      [block_numbers, json_rpc_named_arguments]
+    )
+  end
+
+  def run_inner(block_numbers, json_rpc_named_arguments) do
     unique_numbers =
       block_numbers
       |> Enum.uniq()

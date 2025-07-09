@@ -12,6 +12,7 @@ defmodule Indexer.Fetcher.ReplacedTransaction do
   alias Explorer.Chain.Hash
   alias Indexer.{BufferedTask, Tracer}
   alias Indexer.Fetcher.ReplacedTransaction.Supervisor, as: ReplacedTransactionSupervisor
+  alias Utils.EFlameProfiler
 
   @behaviour BufferedTask
 
@@ -56,6 +57,10 @@ defmodule Indexer.Fetcher.ReplacedTransaction do
 
   @impl BufferedTask
   def init(initial, reducer, _) do
+    EFlameProfiler.profile_call(__MODULE__, :init_inner, [initial, reducer])
+  end
+
+  def init_inner(initial, reducer) do
     {:ok, final} =
       [:block_hash, :nonce, :from_address_hash, :hash]
       |> Chain.stream_pending_transactions(
@@ -104,6 +109,10 @@ defmodule Indexer.Fetcher.ReplacedTransaction do
               tracer: Tracer
             )
   def run(entries, _) do
+    EFlameProfiler.profile_call(__MODULE__, :run_inner, [entries])
+  end
+
+  def run_inner(entries) do
     Logger.debug("fetching replaced transactions for transactions")
 
     try do
