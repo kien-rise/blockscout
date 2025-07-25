@@ -25,14 +25,14 @@ services:
         RELEASE_VERSION: 8.1.1
     pull_policy: build
     environment:
-      ETHEREUM_JSONRPC_HTTP_URL: "https://testnet.riselabs.xyz"
-      ETHEREUM_JSONRPC_TRACE_URL: "https://testnet.riselabs.xyz"
+      ETHEREUM_JSONRPC_HTTP_URL: "https://indexing.testnet.riselabs.xyz"
+      ETHEREUM_JSONRPC_TRACE_URL: "https://indexing.testnet.riselabs.xyz"
       NFT_MEDIA_HANDLER_ENABLED: "false"
       NFT_MEDIA_HANDLER_REMOTE_DISPATCHER_NODE_MODE_ENABLED: "false"
       ETH_JSON_RPC_MAX_BATCH_SIZE: "5"
-      INDEXER_CATCHUP_BLOCKS_BATCH_SIZE: "10"
-      INDEXER_CATCHUP_BLOCKS_CONCURRENCY: "10"
-      INDEXER_RECEIPTS_BATCH_SIZE: "25"
+      INDEXER_CATCHUP_BLOCKS_BATCH_SIZE: "20"
+      INDEXER_CATCHUP_BLOCKS_CONCURRENCY: "20"
+      INDEXER_RECEIPTS_BATCH_SIZE: "250"
 
     ports:
       - "25723:4000"
